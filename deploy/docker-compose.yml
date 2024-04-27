@@ -1,0 +1,91 @@
+version: "3"
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:15.3
+    hostname: postgres
+    command: postgres -c 'max_connections=1000'
+    environment:
+      POSTGRES_DB: languagebot
+      POSTGRES_USER: languagebot
+      POSTGRES_PASSWORD: 123qwerty
+    healthcheck:
+      test: [ CMD-SHELL, "PGPASSWORD=123qwerty pg_isready -h postgres -p 5432 --user languagebot" ]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    expose:
+      - 5432
+    networks:
+      - net
+
+  redis:
+    container_name: redis
+    hostname: redis
+    image: redis:7.2.3
+    volumes:
+      - ./redis.conf:/data/redis.conf
+      - ./redis-users.acl:/data/redis-users.acl
+    entrypoint: [ "redis-server", "/data/redis.conf" ]
+    networks:
+      - net
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli -h redis -p 6379 --user transfermole --pass 9974BBB33CE302343421AED110852C4B ping | grep PONG" ]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+
+  db-creator:
+    container_name: db-creator
+    hostname: db-creator
+    image: languagebot-db-creator:${BRANCH_NAME}
+    environment:
+      DB_NAME: languagebot
+      DB_USER: languagebot
+      DB_PASSWORD: 123qwerty
+      DB_HOST: postgres
+    entrypoint: /bin/sh
+    command: ./deploy_schema.sh
+    networks:
+      - net
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  libretranslate:
+    container_name: libretranslate
+    hostname: libretranslate
+    image: libretranslate/libretranslate:latest
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: [ 'CMD-SHELL', './venv/bin/python scripts/healthcheck.py' ]
+    volumes:
+       - libretranslate_models:/home/libretranslate/.local:rw
+    networks:
+      - net
+
+  languagebot:
+    container_name: languagebot
+    hostname: languagebot
+    image: languagebot-service:${BRANCH_NAME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db-creator:
+        condition: service_completed_successfully
+      libretranslate:
+        condition: service_started
+    networks:
+      - net
+
+networks:
+  net:
+
+volumes:
+  libretranslate_models:

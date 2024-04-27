@@ -1,0 +1,7 @@
+./LICENSE.txt
+./UX.odg
+./.gitignore
+./scripts/*
+./deploy/*
+./db/*
+./.venv/*

@@ -1,0 +1,12 @@
+{
+	"TRANSLATION_SERVICES":[{"type":"libretranslate","url":"http://libretranslate:5000"}],
+	"DB_NAME":"languagebot",
+	"DB_USER":"languagebot",
+	"DB_PASSWORD":"123qwerty",
+	"DB_HOST":"postgres",
+	"REDIS_HOST": "redis",
+	"REDIS_PORT": 6379,
+	"REDIS_USERNAME": "languagebot",
+	"REDIS_PASSWORD": "99BD78EF8993023439CBACE4C4B",
+	"TG_API_KEY": "<PLACE_YOUR_TELEGRAM_BOT_TOKEN_HERE>"
+}
